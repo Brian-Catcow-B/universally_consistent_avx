@@ -38,26 +38,38 @@
 #include <x86intrin.h>
 
 // expects double* dst, double* a, double* b, size_t len in scope
-#define UCAVX_DEF_DOUBLE_256_BINOP_ARBLEN(avx256_binop, scalar_binop_expr_a_i_b_i) \
-    for (size_t i = 0; i * ((256/8)/sizeof(double)) < len; i++) \
+#define UCAVX_DEF_BINOP_ARBLEN(num_avx_bits, type, type_short, avx_binop, scalar_binop_expr_a_i_b_i) \
+    for (size_t i = 0; i * ((num_avx_bits/8)/sizeof(type)) < len; i++) \
     { \
-        __m256d a_i = { a[i*((256/8)/sizeof(double))], a[i*((256/8)/sizeof(double)) + 1], a[i*((256/8)/sizeof(double)) + 2], a[i*((256/8)/sizeof(double)) + 3] }; \
-        __m256d b_i = { b[i*((256/8)/sizeof(double))], b[i*((256/8)/sizeof(double)) + 1], b[i*((256/8)/sizeof(double)) + 2], b[i*((256/8)/sizeof(double)) + 3] }; \
-        __m256d dst_i = avx256_binop(a_i, b_i); \
-        for (size_t j = 0; j < ((256/8)/sizeof(double)); j++) \
+        __m##num_avx_bits##type_short a_i; \
+        for (size_t j = 0; j < ((num_avx_bits/8)/sizeof(type)); j++) \
         { \
-            dst[i*((256/8)/sizeof(double)) + j] = dst_i[j]; \
+           a_i[j] = a[i*((num_avx_bits/8)/sizeof(type)) + j]; \
+        } \
+        __m##num_avx_bits##type_short b_i; \
+        for (size_t j = 0; j < ((num_avx_bits/8)/sizeof(type)); j++) \
+        { \
+           b_i[j] = b[i*((num_avx_bits/8)/sizeof(type)) + j]; \
+        } \
+        __m##num_avx_bits##type_short dst_i = avx_binop(a_i, b_i); \
+        for (size_t j = 0; j < ((num_avx_bits/8)/sizeof(type)); j++) \
+        { \
+            dst[i*((num_avx_bits/8)/sizeof(type)) + j] = dst_i[j]; \
         } \
     } \
     /* arblen leftovers */ \
-    const size_t leftover_section_start = len / ((256/8)/sizeof(double)); \
-    const size_t leftover = len % ((256/8)/sizeof(double)); \
+    const size_t leftover_section_start = len / ((num_avx_bits/8)/sizeof(type)); \
+    const size_t leftover = len % ((num_avx_bits/8)/sizeof(type)); \
     for (size_t i = 0; i < leftover; i++) \
     { \
         const double a_i = a[leftover_section_start + i]; \
         const double b_i = b[leftover_section_start + i]; \
         dst[leftover_section_start + i] = scalar_binop_expr_a_i_b_i; \
     } do {} while(0)
+
+
+#define UCAVX_DEF_DOUBLE_256_BINOP_ARBLEN(avx256_binop, scalar_binop_expr_a_i_b_i) \
+    UCAVX_DEF_BINOP_ARBLEN(256, double, d, avx256_binop, scalar_binop_expr_a_i_b_i)
 
 // TODO: determine how this crap will work
 typedef uint32_t ucavx_available_avx_flags_t;
