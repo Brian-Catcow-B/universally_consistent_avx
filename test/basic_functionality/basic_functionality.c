@@ -3,12 +3,12 @@
 #include "ucavx.h"
 
 void print_vecd(const double* in, size_t len) {
-    puts("{");
+    printf("{");
     for (size_t i = 0; i < len; i++) {
-        if (i > 0) { puts(", "); }
-        printf("%.4f", in[i]);
+        if (i > 0) { printf(", "); }
+        printf("%.1f", in[i]);
     }
-    puts("}");
+    printf("}\n");
 }
 
 int main() {
@@ -21,12 +21,12 @@ int main() {
             b[j] = (double)j * 2;
         }
         printf("---%zu", i);
-        puts("\na:  ");
+        printf("\na:  ");
         print_vecd(a, i);
-        puts("\nb:  ");
+        printf("\nb:  ");
         print_vecd(b, i);
-        ucavx512_add_d_arblen(dst, a, b, i);
-        puts("\ndst:");
+        ucavx256_add_d_arblen(dst, a, b, i);
+        printf("\ndst:");
         print_vecd(dst, i);
     }
     return 0;
