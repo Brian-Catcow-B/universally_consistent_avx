@@ -35,7 +35,7 @@
 #endif // UCAVX_INLINE
 
 #include <stdint.h>
-#include <x86intrin.h>
+#include <immintrin.h>
 
 // expects double* dst, double* a, double* b, size_t len in scope
 #define UCAVX_DEF_BINOP_ARBLEN(num_avx_bits, type, type_short, avx_binop, scalar_binop_expr_a_i_b_i) \
