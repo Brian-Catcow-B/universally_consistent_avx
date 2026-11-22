@@ -1,11 +1,8 @@
 // Universally Consistent AVX (UCAVX).
-// UCAVX comes with absolutely NO WARRENTY.
-// UCAVX comes with absolutely NO LICESNSE.
-// UCAVX comes with absolutely NO COPYRIGHT.
-
-// Free to copy, modify, and distribute.
 
 // --- PLEASE LEAVE THIS SECTION UNTOUCHED ---
+// UCAVX comes with absolutely NO WARRENTY.
+// UCAVX comes with the MIT-0 license, copyright 2026 Brian Billman. https://opensource.org/license/mit-0
 // Originally written by Brian Billman.
 // Original repository at: github.com/brian-catcow-b/universally_consistent_avx
 // Do no evil.
