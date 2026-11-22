@@ -12,7 +12,7 @@ UCX seeks to remedy this by providing a way to quickly, dynamically determine if
 
 ## License
 
-UCX comes with NO LICENSE and NO WARRENTY. The code can be copied and used freely however anyone chooses. There is a section in each source file that asks nicely to be left in wherever UCX is found, but it is not required.
+UCAVX comes with the MIT-0 license and NO WARRENTY. See LICENSE for more details.
 
 Do no evil.
 
