@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#define UCAVX_COMPILE
 #include "ucavx.h"
 
 void print_vecd(const double* in, size_t len) {
