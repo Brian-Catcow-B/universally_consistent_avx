@@ -2,4 +2,4 @@
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-(cd ${SCRIPT_DIR} && gcc -I../../c -g basic_functionality.c)
+(cd ${SCRIPT_DIR} && gcc -Wall -Wextra -I../../c -g basic_functionality.c)

@@ -52,21 +52,29 @@
 #include <stdint.h>
 #include <immintrin.h>
 
+#ifdef UCAVX_ULTRA_DEBUG
+#include <stdio.h>
+#define UCAVX_ULTRA_DEBUG_PRINT(str, ...) printf(str "\n", __VA_ARGS__)
+#else
+#define UCAVX_ULTRA_DEBUG_PRINT(str, ...)
+#endif
+
+
 // fn-like macros start
 
 // expects type* dst, type* a, type* b, size_t len in scope
 #define UCAVX_DEF_BINOP_ARBLEN(num_avx_bits, type, type_short, avx_binop, scalar_binop_expr_a_i_b_i) \
-    for (size_t i = 0; i * ((num_avx_bits/8)/sizeof(type)) < len; i++) \
+    for (size_t i = 0; (i + 1) * ((num_avx_bits/8)/sizeof(type)) <= len; i++) \
     { \
         __m##num_avx_bits##type_short a_i; \
         for (size_t j = 0; j < ((num_avx_bits/8)/sizeof(type)); j++) \
         { \
-           a_i[j] = a[i*((num_avx_bits/8)/sizeof(type)) + j]; \
+            a_i[j] = a[i*((num_avx_bits/8)/sizeof(type)) + j]; \
         } \
         __m##num_avx_bits##type_short b_i; \
         for (size_t j = 0; j < ((num_avx_bits/8)/sizeof(type)); j++) \
         { \
-           b_i[j] = b[i*((num_avx_bits/8)/sizeof(type)) + j]; \
+            b_i[j] = b[i*((num_avx_bits/8)/sizeof(type)) + j]; \
         } \
         __m##num_avx_bits##type_short dst_i = avx_binop(a_i, b_i); \
         for (size_t j = 0; j < ((num_avx_bits/8)/sizeof(type)); j++) \
@@ -75,8 +83,8 @@
         } \
     } \
     /* arblen leftovers */ \
-    const size_t leftover_section_start = len / ((num_avx_bits/8)/sizeof(type)); \
     const size_t leftover = len % ((num_avx_bits/8)/sizeof(type)); \
+    const size_t leftover_section_start = len - leftover; \
     for (size_t i = 0; i < leftover; i++) \
     { \
         const type a_i = a[leftover_section_start + i]; \
@@ -86,7 +94,7 @@
 
 // expects type* dst, type* a, size_t len in scope
 #define UCAVX_DEF_UNARYOP_ARBLEN(num_avx_bits, type, type_short, avx_unaryop, scalar_unaryop_expr_a_i) \
-    for (size_t i = 0; i * ((num_avx_bits/8)/sizeof(type)) < len; i++) \
+    for (size_t i = 0; (i + 1) * ((num_avx_bits/8)/sizeof(type)) <= len; i++) \
     { \
         __m##num_avx_bits##type_short a_i; \
         for (size_t j = 0; j < ((num_avx_bits/8)/sizeof(type)); j++) \
@@ -100,8 +108,8 @@
         } \
     } \
     /* arblen leftovers */ \
-    const size_t leftover_section_start = len / ((num_avx_bits/8)/sizeof(type)); \
     const size_t leftover = len % ((num_avx_bits/8)/sizeof(type)); \
+    const size_t leftover_section_start = len - leftover; \
     for (size_t i = 0; i < leftover; i++) \
     { \
         const type a_i = a[leftover_section_start + i]; \
@@ -110,7 +118,7 @@
 
 // expects type* dst, type* a, type b, size_t len in scope
 #define UCAVX_DEF_VSOP_ARBLEN(num_avx_bits, type, type_short, avx_vsop, scalar_vsop_expr_a_i_b) \
-    for (size_t i = 0; i * ((num_avx_bits/8)/sizeof(type)) < len; i++) \
+    for (size_t i = 0; (i + 1) * ((num_avx_bits/8)/sizeof(type)) <= len; i++) \
     { \
         __m##num_avx_bits##type_short a_i; \
         for (size_t j = 0; j < ((num_avx_bits/8)/sizeof(type)); j++) \
@@ -129,8 +137,8 @@
         } \
     } \
     /* arblen leftovers */ \
-    const size_t leftover_section_start = len / ((num_avx_bits/8)/sizeof(type)); \
     const size_t leftover = len % ((num_avx_bits/8)/sizeof(type)); \
+    const size_t leftover_section_start = len - leftover; \
     for (size_t i = 0; i < leftover; i++) \
     { \
         const type a_i = a[leftover_section_start + i]; \
@@ -181,7 +189,21 @@
 // TODO: determine how this crap will work
 typedef uint32_t ucavx_available_avx_flags_t;
 
-// AVX ARBLEN FUNCTIONS
+// FUNCTIONS
+
+// ucavx<numbits>_add_d_arblen(double* dst, const double* a, const double* b, const size_t len)
+// ucavx<numbits>_sub_d_arblen(double* dst, const double* a, const double* b, const size_t len)
+
+// add_d_arblen
+// dst=a+b
+
+UCAVX_INLINE
+void ucavxscalar_add_d_arblen(double* UCAVX_NONULL dst, const double* UCAVX_NONULL a, const double* UCAVX_NONULL b, const size_t len)
+#ifdef UCAVX_COMPILE
+{ for (size_t i = 0; i < len; i++) { dst[i] =  a[i] + b[i]; } }
+#else
+;
+#endif
 
 __attribute__((target("avx"))) UCAVX_INLINE
 void ucavx128_add_d_arblen(double* UCAVX_NONULL dst, const double* UCAVX_NONULL a, const double* UCAVX_NONULL b, const size_t len)
@@ -203,6 +225,41 @@ __attribute__((target("avx512f"))) UCAVX_INLINE
 void ucavx512_add_d_arblen(double* UCAVX_NONULL dst, const double* UCAVX_NONULL a, const double* UCAVX_NONULL b, const size_t len)
 #ifdef UCAVX_COMPILE
 { UCAVX_DEF_DOUBLE_512_BINOP_ARBLEN(_mm512_add_pd, (a_i + b_i)); }
+#else
+;
+#endif
+
+// sub_d_arblen
+// dst=a-b
+
+UCAVX_INLINE
+void ucavxscalar_sub_d_arblen(double* UCAVX_NONULL dst, const double* UCAVX_NONULL a, const double* UCAVX_NONULL b, const size_t len)
+#ifdef UCAVX_COMPILE
+{ for (size_t i = 0; i < len; i++) { dst[i] =  a[i] - b[i]; } }
+#else
+;
+#endif
+
+__attribute__((target("avx"))) UCAVX_INLINE
+void ucavx128_sub_d_arblen(double* UCAVX_NONULL dst, const double* UCAVX_NONULL a, const double* UCAVX_NONULL b, const size_t len)
+#ifdef UCAVX_COMPILE
+{ UCAVX_DEF_DOUBLE_128_BINOP_ARBLEN(_mm_sub_pd, (a_i - b_i)); }
+#else
+;
+#endif
+
+__attribute__((target("avx2"))) UCAVX_INLINE
+void ucavx256_sub_d_arblen(double* UCAVX_NONULL dst, const double* UCAVX_NONULL a, const double* UCAVX_NONULL b, const size_t len)
+#ifdef UCAVX_COMPILE
+{ UCAVX_DEF_DOUBLE_256_BINOP_ARBLEN(_mm256_sub_pd, (a_i - b_i)); }
+#else
+;
+#endif
+
+__attribute__((target("avx512f"))) UCAVX_INLINE
+void ucavx512_sub_d_arblen(double* UCAVX_NONULL dst, const double* UCAVX_NONULL a, const double* UCAVX_NONULL b, const size_t len)
+#ifdef UCAVX_COMPILE
+{ UCAVX_DEF_DOUBLE_512_BINOP_ARBLEN(_mm512_sub_pd, (a_i - b_i)); }
 #else
 ;
 #endif
